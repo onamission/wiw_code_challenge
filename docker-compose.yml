@@ -1,0 +1,10 @@
+version: "2"
+services:
+  lamp:
+    container_name: lamp
+    image: janes/alpine-lamp
+    ports:
+      - "80:80"
+      - "3306:3306"
+    volumes:
+      - .:/www
