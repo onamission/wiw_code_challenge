@@ -51,17 +51,16 @@ CREATE TABLE IF NOT EXISTS user (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     username VARCHAR(100),
-    PRIMARY KEY(id) )
-    ENGINE = InnoDB;
+    PRIMARY KEY(id) );
 EOF;
-    return $connection->query($sql);
+    $connection->query($sql);
     $sql = <<<EOF
-    INSERT INTO user VALUES
-    (NULL, 'Ella', 'Fitzgerald', 'summertime'),
-    (NULL, 'Jimmy', 'Buffet', 'margaritaville'),
-    (NULL, 'Roger', 'Daltrey', 'pinballwizard'),
-    (NULL, 'Taylor', 'Swift', 'shakeitoff'),
-    (NULL, 'Elvis', 'Presley', 'hounddog');
+    INSERT INTO user (first_name, last_name, username) VALUES
+    ('Ella', 'Fitzgerald', 'summertime'),
+    ('Jimmy', 'Buffet', 'margaritaville'),
+    ('Roger', 'Daltrey', 'pinballwizard'),
+    ('Taylor', 'Swift', 'shakeitoff'),
+    ('Elvis', 'Presley', 'hounddog');
 EOF;
 return $connection->query($sql);
 }
@@ -70,38 +69,37 @@ function create_shift_table(&$connection){
     $sql = <<<EOF
 CREATE TABLE IF NOT EXISTS shift (
     id int NOT NULL AUTO_INCREMENT,
-    user int,
+    user_id int,
     time_in DATETIME,
     time_out DATETIME,
     PRIMARY KEY(id),
-    FOREIGN KEY (user)
+    FOREIGN KEY (user_id)
         REFERENCES user(id)
-        ON DELETE CASCADE)
-    ENGINE=InnoDB;
+        ON DELETE CASCADE);
 EOF;
     $connection->query($sql);
     $sql = <<<EOF
-    INSERT INTO shift VALUES
-    (NULL, 1, STR_TO_DATE('2018-11-24 8:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 2, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 3, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 4, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 5, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 1, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 2, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 3, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 4, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 5, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 1, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 2, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 3, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 4, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 5, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 1, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 2, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 3, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 4, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
-    (NULL, 5, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s"));
+    INSERT INTO shift (user_id, time_in, time_out) VALUES
+    (1, STR_TO_DATE('2018-11-24 8:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (2, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (3, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (4, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (5, STR_TO_DATE('2018-11-24 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (1, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
+    (2, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
+    (3, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
+    (4, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
+    (5, STR_TO_DATE('2018-11-24 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-24 17:00:00',"%Y-%m-%d %H:%i:%s")),
+    (1, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (2, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (3, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (4, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (5, STR_TO_DATE('2018-11-25 8:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (1, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (2, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (3, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (4, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s")),
+    (5, STR_TO_DATE('2018-11-25 12:00:00',"%Y-%m-%d %H:%i:%s"), STR_TO_DATE('2018-11-25 11:00:00',"%Y-%m-%d %H:%i:%s"));
 EOF;
 return $connection->query($sql);
 }

@@ -6,11 +6,11 @@ class Shift extends BaseModel{
     function __construct(){
         parent::__construct();
         $this->table_name = 'shift';
-        $this->column_list = ['shift.id', 'shift.user', 'user.username', 'shift.time_in', 'shift.time_out'];
+        $this->column_list = ['shift.id', 'shift.user_id', 'user.username', 'shift.time_in', 'shift.time_out'];
         $this->sort = 'ORDER BY time_in, time_out DESC';
         $this->joined_tables = [
             [ 'TABLE' => 'user',
-            'ON' => 'user.id = shift.user',
+            'ON' => 'user.id = shift.user_id',
             'TYPE' => 'INNER JOIN']
         ];
     }
@@ -133,7 +133,7 @@ class Shift extends BaseModel{
             $res = $u->run($sql);
             $user = mysqli_fetch_all($res, MYSQLI_ASSOC);
             print_r($user);
-            $data['shift.user'] = $user[0]['id'];
+            $data['shift.user_id'] = $user[0]['id'];
             print_r($data);
             unset($data['user.username']);
             print_r($data);
