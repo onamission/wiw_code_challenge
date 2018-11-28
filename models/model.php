@@ -333,7 +333,7 @@ class BaseModel{
      * @param array $data the new data to update the record
      * @return stirng a message showing the rows updated or an exception
      */
-    public function run_update($id=[], $data=[]){
+    public function run_update($id='', $data=[]){
         $sql = $this->prepare_update($id, $data);
         $req = $this->run($sql);
         if(is_numeric($req)){

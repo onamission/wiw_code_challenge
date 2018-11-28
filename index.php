@@ -32,7 +32,7 @@ switch ($method) {
         echo json_encode($model->run_read_one($id, $sort));
     }
     else{
-        echo json_encode($model->run_read($filter. $sort));
+        echo json_encode($model->run_read($filter, $sort));
     }
     break;
   case 'PUT':

@@ -64,9 +64,7 @@ class Shift extends BaseModel{
         // determine the user from the SET data or the record passed
         $user = '';
         if($id != ''){
-            $sql = $this->prepare_read_one($id);
-            $res = $this->run($sql);
-            $record = mysqli_fetch_all($res, MYSQLI_ASSOC);
+            $record = $this->run_read_one($id);
             $user = $record[0]['username'];
             if($start_time == ''){
                 $start_time = $record[0]['time_in'];
@@ -84,48 +82,54 @@ class Shift extends BaseModel{
             }
         }
         // create the WHERE statment to get a list of records
-        $filter = ['user.username' => "= '$user'"];
+        $filter = "user.username = '$user'";
         if($id != ''){
-            $filter['shift.id'] = "!= $id";
+            $filter .= " AND shift.id != $id";
         }
         if($start_time != ''){
-            $filter['shift.time_out'] = ">= '$start_time'";
+            $filter .= " AND shift.time_out >= '$start_time'";
         }
         if($end_time != ''){
-            $filter['shift.time_in'] = "<= '$end_time'";
+            $filter .= " AND shift.time_in <= '$end_time'";
         }
 
         // get all shift records for the user within the proper timeframe
-        $sql = $this->prepare_read($filter);
-        $res = $this->run($sql);
-        $records = mysqli_fetch_all($res, MYSQLI_ASSOC);
+        $records = $this->run_read($filter);
         $start_timestamp = strtotime($start_time);
         $end_timestamp = strtotime($end_time);
         // if we have any records, loop through them to try to find overlap
+        $valid = '';
         if($records != ''){ 
             foreach($records as $rec){
                 if($start_time != '' && $end_time != '' &&
                   strtotime($rec['time_in']) >= $start_timestamp &&
                   strtotime($rec['time_out']) <= $end_timestamp){
-                    return "Time Conflict: Another shift is inside of this shift";
+                    $valid .= " * Time Conflict: Another shift is inside of this shift\n";
+                    continue;
                 }
                 if($start_time != '' && $end_time != '' &&
                   strtotime($rec['time_in']) <= $start_timestamp &&
                   strtotime($rec['time_out']) >= $end_timestamp){
-                    return "Time Conflict: This shift is inside of another shift";
+                    $valid .= " * Time Conflict: This shift is inside of another shift\n";
+                    continue;
                 }
                 if($start_time != '' && strtotime($rec['time_in']) <= $start_timestamp &&
                   strtotime($rec['time_out']) > $start_timestamp){
-                    return "Time Conflict: Start time in is other shift";
+                    $valid .= " * Time Conflict: Start time in is other shift\n";
+                    continue;
                 }
                 if($end_time != '' && strtotime($rec['time_in']) < $end_timestamp && 
                   strtotime($rec['time_out']) >= $end_timestamp){
-                    return "Time Conflict: End time is in other shift";
+                    $valid .= " * Time Conflict: End time is in other shift\n";
+                    continue;
                 }
             }
         }
         // if we have made it this far, we have a Valid statement
-        return 'Valid';
+        if($valid == ''){
+            $valid = "Valid";
+        }
+        return $valid;
     }
 
     /**
@@ -141,15 +145,15 @@ class Shift extends BaseModel{
      * @param array $data optional, the data to be added or changed
      * @return string a message showing the rows updated or an exception
      */
-    public function run_update($id='', $data=[]){
-        if($id == '' || $data == [] || !array_key_exists('SET', $data)){
+    public function run_update($id = '', $data = []){
+        if($id == '' || $data == []){
             return "No Data";
         }
         $valid = $this->validate_time($id, $data);
         if($valid == 'Valid'){
-            return parent::run_update($id, $data['SET']);
+            return parent::run_update($id, $data);
         }
-        return "ERROR $valid";
+        return "ERROR:\n$valid";
     }
 
     /**
@@ -173,7 +177,7 @@ class Shift extends BaseModel{
         if($valid == 'Valid'){
             return parent::run_insert($data);
         }
-        return "ERROR $valid";
+        return "ERROR\n$valid";
     }
 
     /**
@@ -186,13 +190,13 @@ class Shift extends BaseModel{
      * 
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
-     * @param int $id optional, used for UPDATING a record to get the user
-     * @param array $data optional, the data to be added or changed
+     * @param int $id used for UPDATING a record to get the user
+     * @param array $data the data to be changed
      * @return string a valid SQL statement
      */
     function prepare_update($id = '', $data = []){
         // if there is no data to set, then return an empty string
-        if($data == [] || $id = ''){
+        if($data == [] || $id == ''){
             return '';
         }
         // restrict the UPDATEable fields to only be the two time columns
