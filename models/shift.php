@@ -3,6 +3,16 @@ include_once 'model.php';
 include_once 'user.php';
 
 class Shift extends BaseModel{
+
+    /**
+     * Initializes the object
+     * 
+     * The responsibility of this method is to instanciate the object
+     * by extending the BaseModel's __construct to add the attributes
+     * specific for the 'shift' model
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     */
     function __construct(){
         parent::__construct();
         $this->table_name = 'shift';
@@ -15,6 +25,21 @@ class Shift extends BaseModel{
         ];
     }
 
+    /**
+     * Validate Time
+     * 
+     * The responsibility of this method is to ensure that we are not
+     * overlapping on anyone's time. We have to compare the new or
+     * changed record with other records for that same user in a
+     * specific time period in order to make sure we don't overlap
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id optional, used for UPDATING a record to get the user
+     * @param array $data optional, the data to be added or changed
+     * @return string a message showing the new data is valid or a
+     * reason that it is not
+     */
     function validate_time($id='', $data=[]){
         // if we have no data to set return warning
         if($data == []){
@@ -103,6 +128,19 @@ class Shift extends BaseModel{
         return 'Valid';
     }
 
+    /**
+     * Executes a UPDATE SQL statement
+     * 
+     * The responsibility of this method is to extend
+     * the BaseModel's run_update to add the specific 
+     * time validation on UPDATE
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id optional, used for UPDATING a record to get the user
+     * @param array $data optional, the data to be added or changed
+     * @return string a message showing the rows updated or an exception
+     */
     public function run_update($id='', $data=[]){
         if($id == '' || $data == [] || !array_key_exists('SET', $data)){
             return "No Data";
@@ -114,6 +152,19 @@ class Shift extends BaseModel{
         return "ERROR $valid";
     }
 
+    /**
+     * Executes a INSERT SQL statement
+     * 
+     * The responsibility of this method is to extend
+     * the BaseModel's run_insert to add the specific 
+     * time validation on INSERT
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id optional, used for INSERTING a record to get the user
+     * @param array $data optional, the data to be added or changed
+     * @return string a message showing the rows inserted or an exception
+     */
     public function run_insert($data){
         if($data == []){
             return "No Data";
@@ -125,6 +176,20 @@ class Shift extends BaseModel{
         return "ERROR $valid";
     }
 
+    /**
+     * Creates an UPDATE SQL statement
+     * 
+     * The responsibility of this method is to extend
+     * the BaseModel's prepare_update to add the specific 
+     * restraints on ONLY allowing the time_in and the
+     * time_out to be updated
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id optional, used for UPDATING a record to get the user
+     * @param array $data optional, the data to be added or changed
+     * @return string a valid SQL statement
+     */
     function prepare_update($id = '', $data = []){
         // if there is no data to set, then return an empty string
         if($data == [] || $id = ''){
@@ -139,6 +204,19 @@ class Shift extends BaseModel{
         return parent::prepare_update($id, $data);
     }
 
+    /**
+     * Creates a INSERT SQL statement
+     * 
+     * The responsibility of this method is to extend
+     * the BaseModel's prepare_insert to add the ability to
+     * pass the username from the user table (more human friendly)
+     * and still get the right user_id in the shift table
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param array $data the data to be added
+     * @return string a valid SQL statement
+     */
     public function prepare_insert($data){
         if(array_key_exists('user.username', $data)){
             $u = new User();
@@ -149,6 +227,20 @@ class Shift extends BaseModel{
         return parent::prepare_insert($data);
     }
 
+    /**
+     * Creates a DELETE SQL statement
+     * 
+     * The responsibility of this method is to extend
+     * the BaseModel's prepare_remove to add the ability to
+     * pass the username from the user table (more human friendly)
+     * and still get the right user_id in the shift table
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id optional, an easy way to filter by a record ID
+     * @param array $filter optional -- a way to delete multiple records at once
+     * @return string a valid SQL statement
+     */
     public function prepare_remove($id, $filter){
         if(array_key_exists('user.username', $filter)){
             $u = new User();

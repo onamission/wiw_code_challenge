@@ -15,42 +15,40 @@ include_once 'models/model.php';
 function test_create_sql_statements(){
     $my_model = new BaseModel();
     $my_model->table_name = 'shift';
-    $my_model->column_list = ['id','user','time_in','time_out'];
+    $my_model->column_list = ['shift.id', 'shift.user_id','user.username','shift.time_in','shift.time_out'];
 
     // READ ONE
-    $expected = "SELECT id, user, time_in, time_out FROM shift WHERE 1 = 1 AND id = 32 ;";
+    $expected = "SELECT shift.id, shift.user_id, user.username, shift.time_in, shift.time_out FROM shift WHERE 1 = 1 AND shift.id = 32;";
     $actual = $my_model->prepare_read_one(32);
     check_test($expected, $actual, 'SELECT ONE');
-    $expected = "SELECT id, user, time_in, time_out FROM shift WHERE 1 = 1 AND id = 32 ORDER BY user, time_in, time_out DESC;";
-    $actual = $my_model->prepare_read_one(32, ['columns' => ['user', 'time_in', 'time_out'], 'direction' => 'DESC']);
-    check_test($expected, $actual, 'SELECT ONE SORT');
-
+    
     // READ
-    $expected = "SELECT id, user, time_in, time_out FROM shift WHERE 1 = 1 AND user = 'Bob' ;";
-    $actual = $my_model->prepare_read(['user' => "= 'Bob'"]);
+    $expected = "SELECT shift.id, shift.user_id, user.username, shift.time_in, shift.time_out FROM shift WHERE 1 = 1 AND user_id = 'Bob' ;";
+    $actual = $my_model->prepare_read("user_id = 'Bob'");
     check_test($expected, $actual, "SELECT ANY");
-    $expected = "SELECT id, user, time_in, time_out FROM shift WHERE 1 = 1 AND user = 'Bob' ORDER BY user, time_in, time_out DESC;";
-    $actual = $my_model->prepare_read(['user' => "= 'Bob'"],
-      ['columns' => ['user', 'time_in', 'time_out'], 'direction' => 'DESC']);
+    $expected = "SELECT shift.id, shift.user_id, user.username, shift.time_in, shift.time_out FROM shift WHERE 1 = 1 AND user_id = 'Bob' ORDER BY 'user_id', 'time_in', 'time_out' DESC;";
+    $actual = $my_model->prepare_read("user_id__eq____t__Bob__t__", 
+        "__t__user_id__t____cm____t__time_in__t____cm____t__time_out__t____de__");
     check_test($expected, $actual, "SELECT ANY SORT");
 
     // UPDATE
-    $expected = "UPDATE shift SET user = \"Otto\" WHERE 1 = 1 AND user = 'Bob';";
-    $update_data =[
-        ['user' => "Otto"],
-        ['user' => "= 'Bob'"]
-    ];
-    $actual = $my_model->prepare_update('', $update_data);
+    $expected = "UPDATE shift SET shift.time_in = \"2018-11-14 4:56\" WHERE 1 = 1 AND shift.id = 3;";
+    $update_data = ['shift.time_in' => "2018-11-14 4:56"];
+    $actual = $my_model->prepare_update(3, $update_data);
     check_test($expected, $actual, "UPDATE");
 
     // INSERT
-    $expected = "INSERT INTO shift SET user = \"Bob\";";
-    $actual = $my_model->prepare_insert(['user' => "Bob"]);
+    $expected = "INSERT INTO shift SET shift.user_id = \"3\", shift.time_in = \"2018-11-14 4:56\", shift.time_out = \"2018-11-14 4:56\";";
+    $actual = $my_model->prepare_insert([
+        'shift.user_id'=> 3, 
+        'shift.time_in' => "2018-11-14 4:56", 
+        'shift.time_out' => "2018-11-14 4:56"
+        ]);
     check_test($expected, $actual, "INSERT");
 
     // DELETE
-    $expected = "DELETE FROM shift WHERE 1 = 1 AND user = 'Bob';";
-    $actual = $my_model->prepare_remove('',['user' => "= 'Bob'"]);
+    $expected = "DELETE FROM shift WHERE 1 = 1 AND shift.user_id = 3;";
+    $actual = $my_model->prepare_remove('',['shift.user_id' => "= 3"]);
     check_test($expected, $actual, "DELETE");
 }
 
@@ -70,7 +68,7 @@ function test_foreign_key(){
       "LEFT JOIN prince AS p ON prince.id = makebelieve.prince_id " .
       "INNER JOIN kingdom AS k ON kingdom.id = makebelieve.kingdom_id " .
       "WHERE 1 = 1 AND p.name = 'Charming' ;";
-    $actual = $my_model->prepare_read(['p.name' => "= 'Charming'"]);
+    $actual = $my_model->prepare_read("p__dot__name__eq____t__Charming__t__");
     check_test($expected, $actual, "FORIEGN KEY");
 }
 

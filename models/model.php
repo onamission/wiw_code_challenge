@@ -7,6 +7,15 @@ class BaseModel{
     public $column_list;
     public $joined_tables;
 
+    /**
+     * Initializes the object
+     * 
+     * The responsibility of this method is to instanciate the object
+     * by creating a database connection
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     */
     function __construct(){
         // Connect to the database
         if(!($this->mysqli)){
@@ -23,7 +32,6 @@ class BaseModel{
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
      * @param int   $id   a required record id to be selected
-     * @param array $sort an optional associative array with sorting information
      * @return string a valid SQL SELECT statement
      */
     function prepare_read_one($id){
@@ -44,15 +52,15 @@ class BaseModel{
      * 
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
-     * @param array $filter an optional array with filtering criteria.
-     * @param array $sort an optional array with sorting instructions.
+     * @param string $filter an optional string of filtering criteria.
+     * @param string $sort an optional string with sorting instructions.
      * @return string a valid SQL SELECT statement
      */
     function prepare_read($filter = '', $sort = ''){
         $tables_sql = $this->create_table_list();
         $where_sql = '';
         if($filter != ''){
-            $where_sql = "WHERE " . $this->substitute_symbols($filter);
+            $where_sql = "WHERE 1 = 1 AND " . $this->substitute_symbols($filter);
         }
         $sort_sql = '';
         if($sort != ''){
@@ -62,10 +70,22 @@ class BaseModel{
         }
         $column_sql = implode(', ', $this->column_list);
         $ret_val = "SELECT $column_sql FROM $tables_sql $where_sql $sort_sql;";
-        echo $ret_val;
         return $ret_val;
     }
 
+    /**
+     * Exchanges codes for symbols and comparision operators
+     * 
+     * The responsibility of this method is convert the codes that
+     * are passed in on the query string into more meaningful
+     * symbols and comparision operators to be used in WHERE and
+     * SORT clauses of the SQL statement
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param string $string to be decoded from a query string
+     * @return string a SQL ready string
+     */
     protected function substitute_symbols($string){
         $string = str_replace('__dot__', '.', $string);
         $string = str_replace('__q__', '"', $string);
@@ -78,9 +98,8 @@ class BaseModel{
         $string = str_replace('__ne__', ' != ', $string);
         $string = str_replace('__in__', ' IN ', $string);
         $string = str_replace('__cm__', ', ', $string);
-        $string = str_replace('__as__', ' ASCENDING', $string);
-        $string = str_replace('__de__', ' DESCENDING', $string);
-        echo "Nasty Blokes -> $string\n";
+        $string = str_replace('__as__', ' ASC', $string);
+        $string = str_replace('__de__', ' DESC', $string);
         return $string;
     }
 
@@ -97,10 +116,8 @@ class BaseModel{
      * @return string a valid SQL DELETE statement
      */
     function prepare_remove($id = '', $filter = []){
-        print_r($filter);
         $where_sql = $this->create_where($id, $filter);
         $ret_val = "DELETE FROM {$this->table_name} $where_sql;";
-        echo "$ret_val\n";
         return $ret_val;
     }
 
@@ -143,8 +160,12 @@ class BaseModel{
      * 
      * @param int   $id   an optional record id to be updated
      * @param array $data an optional associative array that contains
-     *  a SET key which is in column_name => value format
-     *  and a WHERE key which is in column_name => expression format
+     *  a column_name => value pair
+     *  
+     * NOTE: I originally coded this to take an additional WHERE 
+     * parameter, but then noticed the requirements call for only 
+     * updating one record at a time by ID, so I removed that 
+     * 
      * @return string a valid SQL UPDATE statement
      */
     function prepare_update($id = '', $data = []){
@@ -169,7 +190,7 @@ class BaseModel{
      * Creates the WHERE clause of the SQL statement
      * 
      * The responsibility of this method is to create a WHERE
-     * portion of the SQL statement to be used for any
+     * portion of the SQL statement to be used for almost any
      * SQL statement. 
      * 
      * @author Tim Turnquist <tim.turnquist@gmail.com>
@@ -222,7 +243,8 @@ class BaseModel{
      * Creates the table list of an SQL SELECT statement
      * 
      * The responsibility of this method is to create the table
-     * listing for a SELECT SQL statement
+     * listing for a SELECT SQL statement which enables JOINS in
+     * the return set
      * 
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
@@ -260,16 +282,57 @@ class BaseModel{
         return $this->mysqli->query($sql);
     }
 
+    /**
+     * Executes a SELECT ONE SQL statement
+     * 
+     * The responsibility of this method is to execute a single SELECT 
+     * SQL statement -- returning only one row based on record ID
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id the record ID to be found
+     * @return mixed a recordset containing a single record
+     */
     public function run_read_one($id){
         $sql = $this->prepare_read_one($id);
         $res = $this->run($sql);
         return mysqli_fetch_all($res, MYSQLI_ASSOC);
     }
+
+    /**
+     * Executes a SELECT (multiple) SQL statement
+     * 
+     * The responsibility of this method is to execute a SELECT 
+     * SQL statement -- possibly being filtered and sorted
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param string $filter an optional filter
+     * @param string $sort an optional string
+     * @return mixed a recordset containing a single record
+     * 
+     * NOTE: Where other places I used associative arrays for my
+     * filter variables, the SELECT is called from the
+     * GET method, so it is easier to pass a query string.
+     */
     public function run_read($filter = '', $sort = ''){
         $sql = $this->prepare_read($filter, $sort);
         $res = $this->run($sql);
         return mysqli_fetch_all($res, MYSQLI_ASSOC);
     }
+
+    /**
+     * Executes an UPDATE SQL statement
+     * 
+     * The responsibility of this method is to execute an UPDATE 
+     * SQL statement
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id the record ID to be found
+     * @param array $data the new data to update the record
+     * @return stirng a message showing the rows updated or an exception
+     */
     public function run_update($id=[], $data=[]){
         $sql = $this->prepare_update($id, $data);
         $req = $this->run($sql);
@@ -278,6 +341,18 @@ class BaseModel{
         }
         return $req;
     }
+
+    /**
+     * Executes an INSERT SQL statement
+     * 
+     * The responsibility of this method is to execute an INSERT 
+     * SQL statement, creating a new record
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param array $data the data for the new record
+     * @return stirng a message showing the rows inserted or an exception
+     */
     public function run_insert($data){
         if($data==[]){
             return "No Data To Set";
@@ -289,6 +364,19 @@ class BaseModel{
         }
         return $req;
     }
+
+    /**
+     * Executes a DELETE SQL statement
+     * 
+     * The responsibility of this method is to execute a DELETE 
+     * SQL statement 
+     * 
+     * @author Tim Turnquist <tim.turnquist@gmail.com>
+     * 
+     * @param int $id optional, an easy way to filter by a record ID
+     * @param array $filter optional -- a way to delete multiple records at once
+     * @return stirng a message showing the rows deleted or an exception
+     */
     public function run_delete($id = '', $filter = []){
         $sql = $this->prepare_remove($id, $filter);
         $req = $this->run($sql);
