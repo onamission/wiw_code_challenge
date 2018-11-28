@@ -22,23 +22,23 @@ function test_create_sql_statements(){
     $actual = $my_model->prepare_read_one(32);
     check_test($expected, $actual, 'SELECT ONE');
     $expected = "SELECT id, user, time_in, time_out FROM shift WHERE 1 = 1 AND id = 32 ORDER BY user, time_in, time_out DESC;";
-    $actual = $my_model->prepare_read_one(32, ['COLUMNS' => ['user', 'time_in', 'time_out'], 'DIRECTION' => 'DESC']);
+    $actual = $my_model->prepare_read_one(32, ['columns' => ['user', 'time_in', 'time_out'], 'direction' => 'DESC']);
     check_test($expected, $actual, 'SELECT ONE SORT');
 
     // READ
     $expected = "SELECT id, user, time_in, time_out FROM shift WHERE 1 = 1 AND user = 'Bob' ;";
-    $actual = $my_model->prepare_read(['WHERE' =>['user' => "= 'Bob'"]]);
+    $actual = $my_model->prepare_read(['user' => "= 'Bob'"]);
     check_test($expected, $actual, "SELECT ANY");
     $expected = "SELECT id, user, time_in, time_out FROM shift WHERE 1 = 1 AND user = 'Bob' ORDER BY user, time_in, time_out DESC;";
-    $actual = $my_model->prepare_read(['WHERE' =>['user' => "= 'Bob'"],
-      'SORT' => ['COLUMNS' => ['user', 'time_in', 'time_out'], 'DIRECTION' => 'DESC']]);
+    $actual = $my_model->prepare_read(['user' => "= 'Bob'"],
+      ['columns' => ['user', 'time_in', 'time_out'], 'direction' => 'DESC']);
     check_test($expected, $actual, "SELECT ANY SORT");
 
     // UPDATE
     $expected = "UPDATE shift SET user = \"Otto\" WHERE 1 = 1 AND user = 'Bob';";
     $update_data =[
-        'SET' => ['user' => "Otto"],
-        'WHERE' =>['user' => "= 'Bob'"]
+        ['user' => "Otto"],
+        ['user' => "= 'Bob'"]
     ];
     $actual = $my_model->prepare_update('', $update_data);
     check_test($expected, $actual, "UPDATE");
@@ -70,7 +70,7 @@ function test_foreign_key(){
       "LEFT JOIN prince AS p ON prince.id = makebelieve.prince_id " .
       "INNER JOIN kingdom AS k ON kingdom.id = makebelieve.kingdom_id " .
       "WHERE 1 = 1 AND p.name = 'Charming' ;";
-    $actual = $my_model->prepare_read(['WHERE' =>['p.name' => "= 'Charming'"]]);
+    $actual = $my_model->prepare_read(['p.name' => "= 'Charming'"]);
     check_test($expected, $actual, "FORIEGN KEY");
 }
 

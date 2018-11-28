@@ -21,16 +21,18 @@ $requested_model = preg_replace('/[^a-z0-9]+/i','',$requested_model);
 $model = new $requested_model;
 
 // Get the ID if there is one
-$id = $request[2]; 
+$id = $request[2];
+$filter = $_GET['filter'];
+$sort = $_GET['sort'];
 
 // Call the proper method based on HTTP method
 switch ($method) {
   case 'GET':
     if($id){
-        echo $model->run_read_one($id);
+        echo json_encode($model->run_read_one($id, $sort));
     }
     else{
-        echo $model->run_read($where);
+        echo json_encode($model->run_read($filter. $sort));
     }
     break;
   case 'PUT':

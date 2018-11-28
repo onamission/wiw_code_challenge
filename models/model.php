@@ -22,19 +22,18 @@ class BaseModel{
      * 
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
-     * @param int   $id   a required record id to be deleted
-     * @param array $data an optional associative array with sorting information
+     * @param int   $id   a required record id to be selected
+     * @param array $sort an optional associative array with sorting information
      * @return string a valid SQL SELECT statement
      */
-    function prepare_read_one($id, $data = []){
-        if($id == ''){
+    function prepare_read_one($id){
+        if(!isset($id)){
             return '';
         }
         $tables_sql = $this->create_table_list();
         $where_sql = $this->create_where($id);
-        $sort_sql = $this->create_sort($data);
         $column_sql = implode(', ', $this->column_list);
-        return "SELECT $column_sql FROM $tables_sql $where_sql $sort_sql;";
+        return "SELECT $column_sql FROM $tables_sql $where_sql;";
     }
 
     /**
@@ -45,25 +44,44 @@ class BaseModel{
      * 
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
-     * @param array $data an optional associative array of with two keys: WHERE and/or SORT.
-     *   WHERE should contain an assoiative array in column_name => expression format.
-     *   SORT should contain an array of columns to sort on and (optionally) a direction to sort
+     * @param array $filter an optional array with filtering criteria.
+     * @param array $sort an optional array with sorting instructions.
      * @return string a valid SQL SELECT statement
      */
-    function prepare_read($data = []){
+    function prepare_read($filter = '', $sort = ''){
         $tables_sql = $this->create_table_list();
         $where_sql = '';
-        if($data != [] && array_key_exists('WHERE', $data)){
-            $where_sql = $this->create_where('', $data['WHERE']);
+        if($filter != ''){
+            $where_sql = "WHERE " . $this->substitute_symbols($filter);
         }
         $sort_sql = '';
-        if($data != [] && array_key_exists('SORT', $data)){
-            $sort_sql = $this->create_sort($data['SORT']);
+        if($sort != ''){
+            $sort_sql = "ORDER BY " . $this->substitute_symbols($sort);
         }elseif(isset($this->sort)){
             $sort_sql = $this->sort;
         }
         $column_sql = implode(', ', $this->column_list);
-        return "SELECT $column_sql FROM $tables_sql $where_sql $sort_sql;";
+        $ret_val = "SELECT $column_sql FROM $tables_sql $where_sql $sort_sql;";
+        echo $ret_val;
+        return $ret_val;
+    }
+
+    protected function substitute_symbols($string){
+        $string = str_replace('__dot__', '.', $string);
+        $string = str_replace('__q__', '"', $string);
+        $string = str_replace('__t__', "'", $string);
+        $string = str_replace('__gt__', ' > ', $string);
+        $string = str_replace('__ge__', ' >= ', $string);
+        $string = str_replace('__lt__', ' < ', $string);
+        $string = str_replace('__le__', ' <= ', $string);
+        $string = str_replace('__eq__', ' = ', $string);
+        $string = str_replace('__ne__', ' != ', $string);
+        $string = str_replace('__in__', ' IN ', $string);
+        $string = str_replace('__cm__', ', ', $string);
+        $string = str_replace('__as__', ' ASCENDING', $string);
+        $string = str_replace('__de__', ' DESCENDING', $string);
+        echo "Nasty Blokes -> $string\n";
+        return $string;
     }
 
     /**
@@ -75,15 +93,15 @@ class BaseModel{
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
      * @param int   $id   an optional record id to be deleted
-     * @param array $data an optional associative array of column_name => expression format
+     * @param array $filter an optional array of column_name => expression format
      * @return string a valid SQL DELETE statement
      */
-    function prepare_remove($id = '', $data = ''){
-        $where_sql = '';
-        if($data != ''){
-            $where_sql = $this->create_where('', $data);
-        }
-        return "DELETE FROM {$this->table_name} $where_sql;";
+    function prepare_remove($id = '', $filter = []){
+        print_r($filter);
+        $where_sql = $this->create_where($id, $filter);
+        $ret_val = "DELETE FROM {$this->table_name} $where_sql;";
+        echo "$ret_val\n";
+        return $ret_val;
     }
 
     /**
@@ -131,19 +149,18 @@ class BaseModel{
      */
     function prepare_update($id = '', $data = []){
         // if there is no data to set, then return an empty string
-        if($data == [] || !(array_key_exists('SET', $data))){
+        if($data == [] || $id == ''){
             return '';
         }
         $set_sql = '';
         $where_sql = '';
-        $set_sql = $this->create_set($data['SET']);
+        $set_sql = $this->create_set($data);
         // check again to make sure there were proper columns listed in the SET
         if(strlen($set_sql) == 0){
             return '';
         }
 
-        $where_data = array_key_exists('WHERE', $data) ? $data['WHERE'] : [];
-        $where_sql = $this->create_where($id, $where_data);
+        $where_sql = $this->create_where($id, []);
         
         return "UPDATE {$this->table_name} $set_sql $where_sql;";
     }
@@ -157,18 +174,18 @@ class BaseModel{
      * 
      * @author Tim Turnquist <tim.turnquist@gmail.com>
      * 
-     * @param array $data an assosiative array of column_names and expressions
-     * example: $data = ['column' => 'BETWEEN 1 and 10']
+     * @param array $filter an assosiative array of column_names and expressions
+     * example: $filter = ['column' => 'BETWEEN 1 and 10']
      * or
-     * example: $data = ['column' => '= 10']
+     * example: $filter = ['column' => '= 10']
      * @return string a valid SQL WHERE clause
      */
-    protected function create_where($id = '', $data = []){
+    protected function create_where($id = '', $filter = []){
         $where = 'WHERE 1 = 1';
         if($id != ''){
             $where .= " AND {$this->table_name}.id = $id";
         }
-        foreach($data as $column => $expression){
+        foreach($filter as $column => $expression){
             // make sure it is in our column list before we add it to the WHERE
             if(in_array($column, $this->column_list)){
                 $where .= " AND $column $expression";
@@ -225,29 +242,6 @@ class BaseModel{
     }
 
     /**
-     * Creates the SORT BY of the SQL statement
-     * 
-     * The responsibility of this method is to create the SORT BY
-     * clasue of the SQL statement to be used for both SELECT statements
-     * 
-     * @author Tim Turnquist <tim.turnquist@gmail.com>
-     * 
-     * @param array $data an associative array with one key for column_names 
-     *   and an another for sort direction (ASC or DESC)
-     * @return string a valid ORDER BY clause to an SQL statement
-     */
-    protected function create_sort($data = []){
-        $sort = '';
-        if(array_key_exists('COLUMNS', $data)){
-            $sort .= "ORDER BY " . implode(', ', $data['COLUMNS']);
-            if(array_key_exists('DIRECTION', $data)){
-                $sort .= " {$data['DIRECTION']}";
-            }
-        }
-        return $sort;
-    }
-
-    /**
      * Executes the SQL statement
      * 
      * The responsibility of this method is to execute the SQL 
@@ -269,12 +263,12 @@ class BaseModel{
     public function run_read_one($id){
         $sql = $this->prepare_read_one($id);
         $res = $this->run($sql);
-        return json_encode(mysqli_fetch_all($res, MYSQLI_ASSOC));
+        return mysqli_fetch_all($res, MYSQLI_ASSOC);
     }
-    public function run_read($data = []){
-        $sql = $this->prepare_read($data);
+    public function run_read($filter = '', $sort = ''){
+        $sql = $this->prepare_read($filter, $sort);
         $res = $this->run($sql);
-        return json_encode(mysqli_fetch_all($res, MYSQLI_ASSOC));
+        return mysqli_fetch_all($res, MYSQLI_ASSOC);
     }
     public function run_update($id=[], $data=[]){
         $sql = $this->prepare_update($id, $data);
@@ -285,19 +279,18 @@ class BaseModel{
         return $req;
     }
     public function run_insert($data){
-        if(!array_key_exists('SET', $data)){
+        if($data==[]){
             return "No Data To Set";
         }
-        $sql = $this->prepare_insert($data['SET']);
-        echo "What the blarney: $sql\n";
+        $sql = $this->prepare_insert($data);
         $req = $this->run($sql);
         if(is_numeric($req)){
             return "Inserted $req record" . ($req > 1 ? "s" : "");
         }
         return $req;
     }
-    public function run_delete($id){
-        $sql = $this->prepare_remove($id, $data);
+    public function run_delete($id = '', $filter = []){
+        $sql = $this->prepare_remove($id, $filter);
         $req = $this->run($sql);
         if(is_numeric($req)){
             return "Deleted $req record" . ($req > 1 ? "s" : "");
